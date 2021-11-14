@@ -6,9 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/2Obstacles.unity
+    path: Assets/Scenes/PlanetaryCave.unity
+    guid: 107ba99c0e4738a429e9ba429214fd0e
+  - enabled: 1
+    path: Assets/Scenes/PlanetaryTunnel.unity
     guid: d5e06811e4ae00d4a8ab76d51a5a6aa8
   - enabled: 1
-    path: Assets/Scenes/3Obstacles.unity
+    path: Assets/Scenes/CityScape.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/IndustrialSector.unity
+    guid: d39efbde3cba68448b8faf528b8f65ac
   m_configObjects: {}

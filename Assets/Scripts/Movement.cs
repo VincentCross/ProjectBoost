@@ -5,95 +5,179 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-    Rigidbody objRigidbody;
-    AudioSource objAudioSource;
-    bool playingBoostAudio;
-    [SerializeField] float thrust = 0f;
-    [SerializeField] float rotation = 0f;
-    [SerializeField] AudioClip engineClip;
-    [SerializeField] ParticleSystem thrustParticles;
-    bool playingThrustParticles;
+	Rigidbody objRigidbody;
+	AudioSource objAudioSource;
+	public bool playingBoostAudio;
+	[SerializeField] float thrust = 0f;
+	[SerializeField] float rotation = 0f;
+	[SerializeField] AudioClip engineClip;
+	[SerializeField] ParticleSystem forwardThrustParticles;
+	[SerializeField] ParticleSystem rightThrustParticlesTop;
+	[SerializeField] ParticleSystem rightThrustParticlesBottom;
+	[SerializeField] ParticleSystem leftThrustParticlesTop;
+	[SerializeField] ParticleSystem leftThrustParticlesBottom;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        Application.targetFrameRate = 60;
-        objRigidbody = GetComponent<Rigidbody>();
-        objAudioSource = GetComponent<AudioSource>();
+	
+	bool playingForwardThrustParticles;
+	bool playingRightThrustParticles;
+	bool playingLeftThrustParticles;
+
+
+	// Start is called before the first frame update
+	void Start()
+	{
+		Application.targetFrameRate = 60;
+		objRigidbody = GetComponent<Rigidbody>();
+		objAudioSource = GetComponent<AudioSource>();
+	}
+
+	// Update is called once per frame
+	void Update()
+	{
+		if (objRigidbody.constraints != RigidbodyConstraints.FreezeAll)
+		{
+			ProcessThrust();
+			ProcessRotation();
+		} else
+        {
+            TurnOffAllEffects();
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void TurnOffAllEffects()
     {
-        if(objRigidbody.constraints != RigidbodyConstraints.FreezeAll)
-        {
-            ProcessThrust();
-            ProcessRotation();
-        } else {
-            if(playingBoostAudio)
-                TurnAudioOff();
-        }
+        if (playingBoostAudio)
+            TurnBoostAudioOff();
+        if (playingForwardThrustParticles)
+            TurnForwardThrustParticlesOff();
+        if (playingRightThrustParticles)
+            TurnRightThrustParticlesOff();
+        if (playingLeftThrustParticles)
+            TurnLeftThrustParticlesOff();
     }
 
     void ProcessThrust()
-    {
-        if (Input.GetKey(KeyCode.W))
+	{
+		if (Input.GetKey(KeyCode.W))
+		{
+			objRigidbody.AddRelativeForce(Vector3.up * Time.deltaTime * thrust * 10);
+			if (!playingBoostAudio)
+				TurnBoostAudioOn();
+			if (!playingForwardThrustParticles)
+				TurnForwardThrustParticlesOn();
+		} else {
+			if (playingBoostAudio && !Input.GetKey(KeyCode.D) && !Input.GetKey(KeyCode.A))
+				TurnBoostAudioOff();
+			if (playingForwardThrustParticles)
+				TurnForwardThrustParticlesOff();
+		}
+	}
+
+	private void TurnForwardThrustParticlesOn()
+	{
+		//Debug.Log("Turn forward thrust particles on.");
+		forwardThrustParticles.Play();
+		playingForwardThrustParticles = true;
+	}
+	
+	private void TurnForwardThrustParticlesOff()
+	{
+		//Debug.Log("Turn forward thrust particles off.");
+		forwardThrustParticles.Stop();
+		playingForwardThrustParticles = false;
+	}
+
+	public void TurnBoostAudioOn()
+	{
+		//Debug.Log("Turning boost audio on.");
+		objAudioSource.Play();
+		playingBoostAudio = true;
+	}
+
+	public void TurnBoostAudioOff()
+	{
+		//Debug.Log("Turning boost audio off.");
+		objAudioSource.Stop();
+		playingBoostAudio = false;
+	}
+
+	void ProcessRotation()
+	{
+		if (Input.GetKey(KeyCode.D))
         {
-            objRigidbody.AddRelativeForce(Vector3.up * Time.deltaTime * thrust * 10);
-            if(!playingBoostAudio)
-                TurnAudioOn();
-            if(!playingThrustParticles)
-                TurnThrustParticlesOn();
-        } else {
-            if (playingBoostAudio)
-                TurnAudioOff();
-            if (playingThrustParticles)
-                TurnThrustParticlesOff();
+            ProcessRotationRight();
         }
-    }
-
-    private void TurnThrustParticlesOn()
-    {
-        thrustParticles.Play();
-        playingThrustParticles = true;
-    }
-    
-    private void TurnThrustParticlesOff()
-    {
-        thrustParticles.Stop();
-        playingThrustParticles = false;
-    }
-
-    void TurnAudioOn()
-    {
-        objAudioSource.Play();
-        playingBoostAudio = true;
-    }
-
-    private void TurnAudioOff()
-    {
-        objAudioSource.Stop();
-        playingBoostAudio = false;
-    }
-
-    void ProcessRotation()
-    {
-        if (Input.GetKey(KeyCode.D))
+        else if (Input.GetKey(KeyCode.A))
         {
-            ApplyRotation(rotation);
+            ProcessRotationLeft();
         }
-        else if (Input.GetKey(KeyCode.A)) {
-            ApplyRotation(-rotation);
-        }
+        else {
+			if (playingRightThrustParticles)
+				TurnRightThrustParticlesOff();
+			if (playingLeftThrustParticles)
+				TurnLeftThrustParticlesOff();
+			if (playingBoostAudio && !Input.GetKey(KeyCode.W))
+				TurnBoostAudioOff();
+		}
+	}
+
+    private void ProcessRotationRight()
+    {
+        ApplyRotation(rotation);
+        if (!playingRightThrustParticles)
+            TurnRightThrustParticlesOn();
+        if (!playingBoostAudio)
+            TurnBoostAudioOn();
     }
 
-    void ApplyRotation(float rotationThisFrame)
+	private void ProcessRotationLeft()
     {
-        if (objRigidbody.constraints != RigidbodyConstraints.FreezeAll)
-        {
-            objRigidbody.freezeRotation = true;
-            objRigidbody.transform.Rotate(Vector3.back * rotationThisFrame * Time.deltaTime * 10);
-            objRigidbody.constraints = (int)RigidbodyConstraints.FreezeRotationX + (int)RigidbodyConstraints.FreezeRotationY + RigidbodyConstraints.FreezePositionZ;
-        }
+        ApplyRotation(-rotation);
+        if (!playingLeftThrustParticles)
+            TurnLeftThrustParticlesOn();
+        if (!playingBoostAudio)
+            TurnBoostAudioOn();
     }
+	
+    private void TurnRightThrustParticlesOn()
+	{
+		//Debug.Log("Turn right thrust particles on");
+		rightThrustParticlesBottom.Play();
+		leftThrustParticlesTop.Play();
+		playingRightThrustParticles = true;
+	}
+	
+	private void TurnRightThrustParticlesOff()
+	{
+		//Debug.Log("Turn right thrust particles off");
+		rightThrustParticlesBottom.Stop();
+		leftThrustParticlesTop.Stop();
+		playingRightThrustParticles = false;
+	}
+
+		private void TurnLeftThrustParticlesOn()
+	{
+		//Debug.Log("Turn left thrust particles on");
+		leftThrustParticlesBottom.Play();
+		rightThrustParticlesTop.Play();
+		playingLeftThrustParticles = true;
+	}
+	
+	private void TurnLeftThrustParticlesOff()
+	{
+		//Debug.Log("Turn left thrust particles off");
+		leftThrustParticlesBottom.Stop();
+		rightThrustParticlesTop.Stop();
+		playingLeftThrustParticles = false;
+	}
+
+	void ApplyRotation(float rotationThisFrame)
+	{
+		if (objRigidbody.constraints != RigidbodyConstraints.FreezeAll)
+		{
+			objRigidbody.freezeRotation = true;
+			objRigidbody.transform.Rotate(Vector3.back * rotationThisFrame * Time.deltaTime * 10);
+			objRigidbody.constraints = (int)RigidbodyConstraints.FreezeRotationX + (int)RigidbodyConstraints.FreezeRotationY + RigidbodyConstraints.FreezePositionZ;
+		}
+	}
 }
